@@ -38,7 +38,7 @@ services:
     container_name: pepal-model-puller
     environment:
       OLLAMA_HOST: http://ollama:11434
-      CHAT_MODEL: ${OLLAMA_CHAT_MODEL:-llama3.2:1b}
+      CHAT_MODEL: ${OLLAMA_CHAT_MODEL:-gemma3:1b}
       EMBEDDING_MODEL: ${OLLAMA_EMBEDDING_MODEL:-nomic-embed-text-v2-moe}
     entrypoint: ["/bin/sh", "-c"]
     command: >
@@ -68,7 +68,7 @@ services:
       DB_USER: "pepal"
       DB_PASSWORD: "localjournal"
       OLLAMA_BASE_URL: "http://ollama:11434"
-      OLLAMA_CHAT_MODEL: "${OLLAMA_CHAT_MODEL:-llama3.2:1b}"
+      OLLAMA_CHAT_MODEL: "${OLLAMA_CHAT_MODEL:-gemma3:1b}"
       OLLAMA_EMBEDDING_MODEL: "${OLLAMA_EMBEDDING_MODEL:-nomic-embed-text-v2-moe}"
       JAVA_OPTS: "-Xmx512m -XX:+UseG1GC"
     depends_on:

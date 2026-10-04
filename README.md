@@ -18,7 +18,7 @@ A 100% local, offline, physical-style AI journal web app. Built with Spring Boot
 ## Tech Stack
 
 - **Backend**: Spring Boot 3.4.4, Java 17, Spring JDBC (`JdbcTemplate`), Flyway Migrations
-- **AI Integration**: Spring AI (Ollama `llama3.2:1b` chat model and `nomic-embed-text` 768-dim embeddings)
+- **AI Integration**: Spring AI (Ollama `gemma3:1b` chat model and `nomic-embed-text` 768-dim embeddings)
 - **Database**: PostgreSQL 16 with `pgvector` extension and HNSW cosine index
 - **Frontend**: Single Page Application with Vanilla HTML5, CSS3, and JavaScript Fetch API
 
