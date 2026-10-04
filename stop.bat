@@ -1,13 +1,13 @@
 @echo off
 setlocal enabledelayedexpansion
-title Stopping pepal Journal
+title Stopping Pepal — Your Pen-pal
 
 :: Change directory to script location for double-click support
 cd /d "%~dp0"
 
 echo.
 echo ==============================================================
-echo                   Stopping pepal Journal
+echo                 Stopping Pepal: Your Pen-pal
 echo ==============================================================
 echo.
 
@@ -17,7 +17,7 @@ docker compose down
 if %errorlevel% equ 0 (
     echo.
     echo ==============================================================
-    echo  [SUCCESS] All pepal Journal services have stopped safely.
+    echo  [SUCCESS] All Pepal services have stopped safely.
     echo  Your entries and models are safely preserved in Docker volumes.
     echo ==============================================================
 ) else (

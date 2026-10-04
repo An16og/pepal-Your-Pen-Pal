@@ -7,7 +7,7 @@ cd "$SCRIPT_DIR"
 
 echo
 echo "=============================================================="
-echo "                  pepal Journal Launcher"
+echo "                   Pepal: Your Pen-pal"
 echo "         Offline, Local-First AI Physical Journal"
 echo "=============================================================="
 echo
@@ -44,7 +44,7 @@ echo
 docker compose up -d --build
 
 echo
-echo "[*] Waiting for pepal Journal to be ready at http://localhost:8080 ..."
+echo "[*] Waiting for Pepal to be ready at http://localhost:8080 ..."
 ATTEMPTS=0
 until curl -s -f http://localhost:8080/ > /dev/null 2>&1 || [ "$ATTEMPTS" -ge 90 ]; do
     ATTEMPTS=$((ATTEMPTS + 1))
@@ -54,7 +54,7 @@ done
 if [ "$ATTEMPTS" -lt 90 ]; then
     echo
     echo "=============================================================="
-    echo " [SUCCESS] pepal Journal is online at http://localhost:8080"
+    echo " [SUCCESS] Pepal (Your Pen-pal) is online at http://localhost:8080"
     echo "=============================================================="
     echo
     echo "[*] Opening in your default browser..."

@@ -6,7 +6,7 @@ cd "$SCRIPT_DIR"
 
 echo
 echo "=============================================================="
-echo "                  Stopping pepal Journal"
+echo "                Stopping Pepal: Your Pen-pal"
 echo "=============================================================="
 echo
 
@@ -15,7 +15,7 @@ docker compose down
 
 echo
 echo "=============================================================="
-echo " [SUCCESS] All pepal Journal services have been stopped."
+echo " [SUCCESS] All Pepal services have been stopped."
 echo " Your journal entries and models are safely saved in volumes."
 echo "=============================================================="
 echo

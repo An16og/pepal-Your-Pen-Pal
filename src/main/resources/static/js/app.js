@@ -8,8 +8,9 @@ import { initChatView } from './views/chat.js?v=2.4';
 import { initSettingsView } from './views/settings.js?v=2.4';
 
 // Single source of truth for App Name and Title
-export const APP_NAME = 'pepal';
-export const APP_TITLE = 'pepal — Private Physical Journal';
+export const APP_NAME = 'Pepal';
+export const APP_SUBHEADING = 'Your Pen-pal';
+export const APP_TITLE = 'Pepal — Your Pen-pal';
 
 document.title = APP_TITLE;
 

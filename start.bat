@@ -1,13 +1,13 @@
 @echo off
 setlocal enabledelayedexpansion
-title pepal Journal
+title Pepal — Your Pen-pal
 
 :: Change directory to script location for double-click support
 cd /d "%~dp0"
 
 echo.
 echo ==============================================================
-echo                   pepal Journal Launcher
+echo                   Pepal: Your Pen-pal
 echo          Offline, Local-First AI Physical Journal
 echo ==============================================================
 echo.
@@ -55,7 +55,7 @@ if %errorlevel% neq 0 (
 )
 
 echo.
-echo [*] Waiting for pepal Journal to be ready at http://localhost:8080 ...
+echo [*] Waiting for Pepal to be ready at http://localhost:8080 ...
 set /a ATTEMPTS=0
 
 :WAIT_LOOP
@@ -69,7 +69,7 @@ goto WAIT_LOOP
 :READY
 echo.
 echo ==============================================================
-echo  [SUCCESS] pepal Journal is online at http://localhost:8080
+echo  [SUCCESS] Pepal (Your Pen-pal) is online at http://localhost:8080
 echo ==============================================================
 echo.
 echo [*] Opening http://localhost:8080 in your default browser...

@@ -53,7 +53,7 @@ function renderSettingsView(settings) {
   nameSection.appendChild(el('h3', { className: 'settings-section-title', textContent: 'Your Name' }));
   nameSection.appendChild(el('p', {
     className: 'settings-section-desc',
-    textContent: 'Set your name so pepal can greet you personally on the landing page.'
+    textContent: 'Set your name so Pepal can greet you personally on the landing page.'
   }));
 
   const savedName = localStorage.getItem('pepal-user-name') || settings.userName || '';
@@ -121,7 +121,7 @@ function renderSettingsView(settings) {
   presetSection.appendChild(el('h3', { className: 'settings-section-title', textContent: 'Companion Persona' }));
   presetSection.appendChild(el('p', {
     className: 'settings-section-desc',
-    textContent: 'Choose how your AI journal companion reflects and responds. Presets guide prompt tone and reflection style.'
+    textContent: 'Choose how Pepal, your pen-pal companion, reflects and responds. Presets guide prompt tone and reflection style.'
   }));
 
   const presetGrid = el('div', { className: 'preset-grid', role: 'radiogroup', 'aria-label': 'Persona presets' });
