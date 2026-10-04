@@ -7,7 +7,7 @@ cd "$SCRIPT_DIR"
 
 echo
 echo "=============================================================="
-echo "                   Pepal: Your Pen-pal"
+echo "                   Pepal: Your Penpal"
 echo "         Offline, Local-First AI Physical Journal"
 echo "=============================================================="
 echo
@@ -54,7 +54,7 @@ done
 if [ "$ATTEMPTS" -lt 90 ]; then
     echo
     echo "=============================================================="
-    echo " [SUCCESS] Pepal (Your Pen-pal) is online at http://localhost:8080"
+    echo " [SUCCESS] Pepal (Your Penpal) is online at http://localhost:8080"
     echo "=============================================================="
     echo
     echo "[*] Opening in your default browser..."

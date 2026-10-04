@@ -1,13 +1,13 @@
 @echo off
 setlocal enabledelayedexpansion
-title Pepal — Your Pen-pal
+title Pepal — Your Penpal
 
 :: Change directory to script location for double-click support
 cd /d "%~dp0"
 
 echo.
 echo ==============================================================
-echo                   Pepal: Your Pen-pal
+echo                   Pepal: Your Penpal
 echo          Offline, Local-First AI Physical Journal
 echo ==============================================================
 echo.
@@ -69,7 +69,7 @@ goto WAIT_LOOP
 :READY
 echo.
 echo ==============================================================
-echo  [SUCCESS] Pepal (Your Pen-pal) is online at http://localhost:8080
+echo  [SUCCESS] Pepal (Your Penpal) is online at http://localhost:8080
 echo ==============================================================
 echo.
 echo [*] Opening http://localhost:8080 in your default browser...

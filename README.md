@@ -1,4 +1,4 @@
-# Pepal: Your Pen-pal
+# Pepal: Your Penpal
 
 A 100% local, offline, physical-style AI journal web app. Built with Spring Boot 3, Spring AI, PostgreSQL (pgvector), Flyway, and vanilla HTML/CSS/JS.
 

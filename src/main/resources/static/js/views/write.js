@@ -430,10 +430,10 @@ export function updateLandingGreeting() {
   const displayName = name ? name : 'Friend';
   if (currentMode === 'DAILY_PROMPT') {
     greetingEl.textContent = `${timeGreeting}, ${displayName}.`;
-    if (subEl) subEl.textContent = 'Your Pen-pal is here. Make a little room for your thoughts today.';
+    if (subEl) subEl.textContent = 'Your Penpal is here. Make a little room for your thoughts today.';
   } else {
     greetingEl.textContent = `Freeform reflection, ${displayName}.`;
-    if (subEl) subEl.textContent = 'Write without limits — your pen-pal preserves whatever is on your mind.';
+    if (subEl) subEl.textContent = 'Write without limits — your penpal preserves whatever is on your mind.';
   }
 }
 

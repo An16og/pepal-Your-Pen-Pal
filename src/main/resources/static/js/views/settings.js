@@ -121,7 +121,7 @@ function renderSettingsView(settings) {
   presetSection.appendChild(el('h3', { className: 'settings-section-title', textContent: 'Companion Persona' }));
   presetSection.appendChild(el('p', {
     className: 'settings-section-desc',
-    textContent: 'Choose how Pepal, your pen-pal companion, reflects and responds. Presets guide prompt tone and reflection style.'
+    textContent: 'Choose how Pepal, your penpal companion, reflects and responds. Presets guide prompt tone and reflection style.'
   }));
 
   const presetGrid = el('div', { className: 'preset-grid', role: 'radiogroup', 'aria-label': 'Persona presets' });

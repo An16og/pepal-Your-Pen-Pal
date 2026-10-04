@@ -6,7 +6,7 @@ cd "$SCRIPT_DIR"
 
 echo
 echo "=============================================================="
-echo "                Stopping Pepal: Your Pen-pal"
+echo "                Stopping Pepal: Your Penpal"
 echo "=============================================================="
 echo
 

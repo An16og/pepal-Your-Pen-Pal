@@ -1,13 +1,13 @@
 @echo off
 setlocal enabledelayedexpansion
-title Stopping Pepal — Your Pen-pal
+title Stopping Pepal — Your Penpal
 
 :: Change directory to script location for double-click support
 cd /d "%~dp0"
 
 echo.
 echo ==============================================================
-echo                 Stopping Pepal: Your Pen-pal
+echo                 Stopping Pepal: Your Penpal
 echo ==============================================================
 echo.
 
