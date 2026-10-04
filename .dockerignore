@@ -1,0 +1,10 @@
+target/
+.git/
+.gitignore
+.idea/
+*.md
+*.log
+docs/
+scripts/
+*.bat
+*.sh

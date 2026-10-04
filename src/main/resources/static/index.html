@@ -1,0 +1,478 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>pepal — Private Physical Journal</title>
+  <!-- Inline pre-paint script to prevent theme flash -->
+  <script>
+    (function() {
+      try {
+        var saved = localStorage.getItem('pepal-theme') || localStorage.getItem('usher-theme');
+        var theme = (saved === 'amoled') ? 'amoled' : ((saved === 'night' || saved === 'dark') ? 'night' : 'paper');
+        document.documentElement.dataset.theme = theme;
+      } catch (e) {
+        document.documentElement.dataset.theme = 'paper';
+      }
+    })();
+  </script>
+  <link rel="stylesheet" href="/style.css?v=2.4">
+  <script type="module" src="/js/app.js?v=2.4"></script>
+</head>
+<body>
+  <!-- Left Side Slide-Out Menu -->
+  <aside id="left-side-menu" class="left-side-menu" aria-label="Main navigation menu" aria-hidden="true">
+    <div class="left-menu-header">
+      <div class="left-menu-brand">
+        <span class="wordmark">pepal<span class="wordmark-period">.</span></span>
+        <span id="menu-user-pill" class="menu-user-pill">
+          <svg class="ui-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          <span>Friend</span>
+        </span>
+      </div>
+      <button id="left-menu-close" class="left-menu-close" type="button" aria-label="Close menu">&times;</button>
+    </div>
+
+    <nav class="left-menu-nav">
+      <div class="left-menu-section-label">MAIN OPTIONS</div>
+      <a class="left-menu-item" href="#/chat" id="menu-item-chat">
+        <span class="menu-item-icon">
+          <svg class="ui-icon" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        </span>
+        <div class="menu-item-content">
+          <span class="menu-item-title">RAG Bot</span>
+          <span class="menu-item-desc">Ask your journal with local AI</span>
+        </div>
+      </a>
+      <a class="left-menu-item" href="#/trash" id="menu-item-trash">
+        <span class="menu-item-icon">
+          <svg class="ui-icon" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+        </span>
+        <div class="menu-item-content">
+          <span class="menu-item-title">Trash</span>
+          <span class="menu-item-desc">Recycle bin &amp; deleted entries</span>
+        </div>
+      </a>
+      <a class="left-menu-item" href="#/settings" id="menu-item-settings">
+        <span class="menu-item-icon">
+          <svg class="ui-icon" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        </span>
+        <div class="menu-item-content">
+          <span class="menu-item-title">Settings</span>
+          <span class="menu-item-desc">Set your name &amp; AI persona</span>
+        </div>
+      </a>
+
+      <div class="left-menu-divider"></div>
+
+      <div class="left-menu-section-label">JOURNAL VIEWS</div>
+      <a class="left-menu-item" href="#/write" id="menu-item-write">
+        <span class="menu-item-icon">
+          <svg class="ui-icon" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+        </span>
+        <div class="menu-item-content">
+          <span class="menu-item-title">Write</span>
+          <span class="menu-item-desc">Daily prompt &amp; freeform page</span>
+        </div>
+      </a>
+      <a class="left-menu-item" href="#/history" id="menu-item-history">
+        <span class="menu-item-icon">
+          <svg class="ui-icon" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+        </span>
+        <div class="menu-item-content">
+          <span class="menu-item-title">History</span>
+          <span class="menu-item-desc">Search &amp; browse past entries</span>
+        </div>
+      </a>
+      <a class="left-menu-item" href="#/summaries" id="menu-item-summaries">
+        <span class="menu-item-icon">
+          <svg class="ui-icon" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        </span>
+        <div class="menu-item-content">
+          <span class="menu-item-title">Summaries</span>
+          <span class="menu-item-desc">Weekly, monthly &amp; yearly reviews</span>
+        </div>
+      </a>
+    </nav>
+
+    <div class="left-menu-footer">
+      <span class="menu-privacy-tag">
+        <svg class="ui-icon" viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        100% Offline &amp; Private
+      </span>
+    </div>
+  </aside>
+  <div id="left-menu-backdrop" class="left-menu-backdrop"></div>
+
+  <main class="app-shell">
+    <header class="masthead">
+      <div class="masthead-left">
+        <button id="left-menu-btn" class="left-menu-btn" type="button" aria-label="Open side menu" title="Open navigation menu">
+          <svg class="ui-icon" viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+          <span class="menu-btn-label">Menu</span>
+        </button>
+        <div class="masthead-brand">
+          <a class="wordmark" href="#/write" aria-label="pepal home">pepal<span class="wordmark-period">.</span></a>
+          <span class="offline-pill" title="100% local, no external APIs">● Local &amp; Offline</span>
+        </div>
+      </div>
+      <div class="masthead-center">
+        <span class="masthead-tagline">A PRIVATE SPACE TO REFLECT</span>
+        <time id="current-time" class="current-time" aria-live="off"></time>
+      </div>
+      <div class="masthead-actions">
+        <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Switch theme">
+          <svg class="ui-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          <span>Night mode</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Navigation Tabs: Focused on Primary Journal Sections -->
+    <nav class="tabs" aria-label="Journal sections" role="tablist">
+      <button class="tab is-active" id="tab-write" role="tab" aria-selected="true" aria-controls="panel-write" data-panel="write">
+        <svg class="ui-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+        <span>Write</span>
+      </button>
+      <button class="tab" id="tab-history" role="tab" aria-selected="false" aria-controls="panel-history" data-panel="history">
+        <svg class="ui-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+        <span>History</span>
+      </button>
+      <button class="tab" id="tab-summaries" role="tab" aria-selected="false" aria-controls="panel-summaries" data-panel="summaries">
+        <svg class="ui-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        <span>Summaries</span>
+      </button>
+    </nav>
+
+    <!-- TAB 1: WRITE VIEW (LANDING PAGE) -->
+    <section class="panel is-active" id="panel-write" role="tabpanel" aria-labelledby="tab-write">
+      <!-- Big Hero Greeting -->
+      <div class="landing-greeting-hero">
+        <div class="greeting-badge" id="greeting-badge">TODAY</div>
+        <h1 id="landing-greeting" class="landing-greeting">Good day, Friend.</h1>
+        <p class="landing-greeting-sub" id="landing-greeting-sub">Make a little room for your thoughts today.</p>
+      </div>
+
+      <!-- Compact Entry Mode & Date Strip -->
+      <div class="sheet-meta-strip">
+        <div class="mode-pills" role="radiogroup" aria-label="Select entry mode">
+          <button type="button" class="mode-pill is-active" id="mode-daily" data-mode="DAILY_PROMPT" aria-checked="true" role="radio">
+            <svg class="ui-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l2.4 7.2L22 12l-7.6 2.8L12 22l-2.4-7.2L2 12l7.6-2.8L12 2z"/></svg>
+            <span>Daily Reflection (3 AI Prompts)</span>
+          </button>
+          <button type="button" class="mode-pill" id="mode-freeform" data-mode="FREEFORM" aria-checked="false" role="radio">
+            <svg class="ui-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+            <span>Freeform Page</span>
+          </button>
+        </div>
+        <div class="date-strip-group">
+          <label class="date-strip-label" for="entry-date">
+            <svg class="ui-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            <span>Entry Date:</span>
+          </label>
+          <input type="date" id="entry-date" name="entryDate" class="date-strip-input" required>
+        </div>
+      </div>
+
+      <!-- Wellbeing State Selector: Energy and Mood separated, equally visible, uncluttered -->
+      <div class="wellbeing-strip" aria-label="State of mind and body">
+        <div class="wellbeing-card wellbeing-card-energy">
+          <div class="wellbeing-header">
+            <span class="wellbeing-icon">
+              <svg class="ui-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            </span>
+            <span class="wellbeing-title">PHYSICAL ENERGY</span>
+          </div>
+          <div class="wellbeing-toggles" id="energy-toggle" role="radiogroup" aria-label="Physical energy">
+            <button type="button" class="wellbeing-btn wellbeing-btn-high is-selected" data-value="HIGH" role="radio" aria-checked="true">
+              <svg class="ui-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+              <span>High Energy</span>
+            </button>
+            <button type="button" class="wellbeing-btn wellbeing-btn-low" data-value="LOW" role="radio" aria-checked="false">
+              <svg class="ui-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="6" width="18" height="12" rx="2" ry="2"/><line x1="23" y1="13" x2="23" y2="11"/></svg>
+              <span>Low Energy</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="wellbeing-card wellbeing-card-mood">
+          <div class="wellbeing-header">
+            <span class="wellbeing-icon">
+              <svg class="ui-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+            </span>
+            <span class="wellbeing-title">EMOTIONAL MOOD</span>
+          </div>
+          <div class="wellbeing-toggles" id="mood-toggle" role="radiogroup" aria-label="Emotional mood">
+            <button type="button" class="wellbeing-btn wellbeing-btn-good is-selected" data-value="GOOD" role="radio" aria-checked="true">
+              <svg class="ui-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+              <span>Good Mood</span>
+            </button>
+            <button type="button" class="wellbeing-btn wellbeing-btn-bad" data-value="BAD" role="radio" aria-checked="false">
+              <svg class="ui-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9z"/></svg>
+              <span>Difficult Mood</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <form id="entry-form" class="entry-form">
+        <!-- 3 Reflection Questions (Shown in Daily Reflection mode) -->
+        <div id="prompt-container" class="prompt-card">
+          <div class="prompt-header">
+            <div>
+              <div class="prompt-header-title-wrap">
+                <p class="eyebrow">DAILY REFLECTION PROMPTS</p>
+                <div id="prompt-source-badge" class="prompt-source-badge"></div>
+              </div>
+              <span class="prompt-sub">Click any prompt to insert, or click "Insert as Template".</span>
+            </div>
+            <div class="prompt-actions">
+              <button type="button" id="shuffle-prompts" class="button button-ghost-sm" title="Get fresh questions for today">
+                <svg class="ui-icon" viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                <span>Shuffle</span>
+              </button>
+              <button type="button" id="insert-prompts-template" class="button button-ghost-sm" title="Insert questions into reflection text">
+                <svg class="ui-icon" viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                <span>Insert as Template</span>
+              </button>
+            </div>
+          </div>
+          <ol id="prompt-list" class="prompt-numbered-list"></ol>
+        </div>
+
+        <!-- Notebook Lined Writing Sheet -->
+        <div class="sheet-container">
+          <label class="eyebrow" for="entry-body">YOUR JOURNAL PAGE</label>
+          <textarea id="entry-body" name="body" maxlength="30000" placeholder="Write what comes to mind… (Ctrl+Enter to save)" required></textarea>
+        </div>
+
+        <div class="form-footer">
+          <div class="footer-meta">
+            <span id="word-count" class="word-count">0 words</span>
+            <span id="entry-status" class="status" role="status"></span>
+          </div>
+          <div class="form-actions">
+            <button class="button button-ghost" type="button" id="entry-clear">Clear</button>
+            <button class="button button-primary" type="submit" id="entry-submit">Save entry</button>
+          </div>
+        </div>
+      </form>
+    </section>
+
+    <!-- TAB 2: HISTORY VIEW -->
+    <section class="panel" id="panel-history" role="tabpanel" aria-labelledby="tab-history" hidden>
+      <div class="section-heading compact-heading">
+        <p class="eyebrow">YOUR ARCHIVE</p>
+        <h1>Looking back.</h1>
+        <p class="intro">Your saved reflections and freeform pages, preserved with mood and energy.</p>
+      </div>
+
+      <!-- Filters Bar -->
+      <div class="history-filter-bar">
+        <div class="filter-group filter-search-wrap">
+          <label class="eyebrow" for="history-search">Search text</label>
+          <input type="search" id="history-search" class="filter-input" placeholder="Search entries…">
+        </div>
+        <div class="filter-group">
+          <label class="eyebrow" for="history-filter-type">Type</label>
+          <select id="history-filter-type" class="filter-select">
+            <option value="ALL">All types</option>
+            <option value="DAILY_PROMPT">Daily Reflection</option>
+            <option value="FREEFORM">Freeform</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label class="eyebrow" for="history-filter-mood">Mood</label>
+          <select id="history-filter-mood" class="filter-select">
+            <option value="ALL">All moods</option>
+            <option value="GOOD">Good</option>
+            <option value="BAD">Bad</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label class="eyebrow" for="history-filter-energy">Energy</label>
+          <select id="history-filter-energy" class="filter-select">
+            <option value="ALL">All energy</option>
+            <option value="HIGH">High</option>
+            <option value="LOW">Low</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label class="eyebrow" for="history-date-from">From</label>
+          <input type="date" id="history-date-from" class="filter-input-date">
+        </div>
+        <div class="filter-group">
+          <label class="eyebrow" for="history-date-to">To</label>
+          <input type="date" id="history-date-to" class="filter-input-date">
+        </div>
+        <div class="filter-group filter-clear-wrap">
+          <button type="button" id="history-filter-clear" class="button button-ghost-sm">Reset</button>
+        </div>
+      </div>
+
+      <div id="history-list" class="history-list" aria-live="polite"></div>
+    </section>
+
+    <!-- TAB 3: SUMMARIES VIEW -->
+    <section class="panel" id="panel-summaries" role="tabpanel" aria-labelledby="tab-summaries" hidden>
+      <div class="section-heading compact-heading">
+        <p class="eyebrow">LONGITUDINAL REVIEWS</p>
+        <h1>Periodic Summaries.</h1>
+        <p class="intro">AI-synthesized weekly, monthly, and yearly reflections with grounded mood and energy statistics.</p>
+      </div>
+
+      <!-- Controls: Toggle Weeks/Months/Years & Generator (NO redundant dropdowns) -->
+      <div class="summary-top-bar">
+        <div class="summary-period-tabs" role="tablist" aria-label="Summary period type">
+          <button type="button" class="period-tab is-active" id="summary-toggle-week" role="tab" aria-selected="true">Weeks</button>
+          <button type="button" class="period-tab" id="summary-toggle-month" role="tab" aria-selected="false">Months</button>
+          <button type="button" class="period-tab" id="summary-toggle-year" role="tab" aria-selected="false">Years</button>
+        </div>
+
+        <form id="summary-generate-form" class="summary-generate-form">
+          <div class="generate-inputs">
+            <label class="eyebrow" for="summary-target-date" id="summary-date-label">DATE IN TARGET WEEK</label>
+            <input type="date" id="summary-target-date" required>
+          </div>
+          <button type="submit" id="summary-generate-submit" class="button button-primary">Generate Weekly Summary</button>
+        </form>
+      </div>
+      <div id="summary-generate-status" class="status" role="status"></div>
+
+      <div id="summaries-list" class="summaries-list" aria-live="polite"></div>
+    </section>
+
+    <!-- TAB 4: TRASH VIEW (Accessible via Left Side Menu) -->
+    <section class="panel" id="panel-trash" role="tabpanel" aria-labelledby="menu-item-trash" hidden>
+      <div class="trash-top-bar">
+        <div class="section-heading compact-heading">
+          <p class="eyebrow">RECYCLE BIN</p>
+          <h1>Trash Archive.</h1>
+          <p class="intro">Soft-deleted entries are kept for 30 days before being automatically purged.</p>
+        </div>
+        <div>
+          <button type="button" id="empty-trash-btn" class="button button-danger">Empty Trash</button>
+        </div>
+      </div>
+      <div id="trash-list" class="trash-list" aria-live="polite"></div>
+    </section>
+
+    <!-- TAB 5: SETTINGS VIEW (Accessible via Left Side Menu) -->
+    <section class="panel" id="panel-settings" role="tabpanel" aria-labelledby="menu-item-settings" hidden>
+      <div class="section-heading compact-heading">
+        <p class="eyebrow">CUSTOMIZATION &amp; SAFETY</p>
+        <h1>Companion Settings.</h1>
+        <p class="intro">Set your name, persona tone, and visual theme for your private journal companion.</p>
+      </div>
+      <div id="settings-content" class="settings-content"></div>
+    </section>
+
+    <!-- TAB 6: RAG BOT CHAT VIEW (Accessible via Left Side Menu) -->
+    <section class="panel" id="panel-chat" role="tabpanel" aria-labelledby="menu-item-chat" hidden>
+      <div class="section-heading compact-heading">
+        <p class="eyebrow">GROUNDED AI CONVERSATION</p>
+        <h1>Ask your journal.</h1>
+        <p class="intro">Powered by local pgvector similarity search and Ollama. Answers strictly cite your entries.</p>
+      </div>
+
+      <div class="chat-card">
+        <!-- Top Right Save Button inside the Chat Card -->
+        <div class="chat-card-topbar">
+          <div class="chat-status-indicator">
+            <span class="chat-status-dot">●</span>
+            <span class="chat-status-text">Local Ollama Companion</span>
+          </div>
+          <button id="rag-save-entry-btn" class="button button-ghost-sm rag-save-btn" type="button" title="Save this conversation as a journal entry">
+            <svg class="ui-icon" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+            <span>Save Chat as Entry</span>
+          </button>
+        </div>
+
+        <div id="chat-messages" class="chat-messages" aria-live="polite" aria-label="Conversation">
+          <div class="chat-starter">
+            <p class="chat-note">Try asking about your past reflections, moods, or energy patterns:</p>
+            <div class="suggestion-chips">
+              <button type="button" class="chip chip-suggestion">When was I most stressed or low energy?</button>
+              <button type="button" class="chip chip-suggestion">What did I write on good mood days?</button>
+              <button type="button" class="chip chip-suggestion">What patterns do you notice in my reflections?</button>
+              <button type="button" class="chip chip-suggestion">Summarize my recent thoughts and reflections.</button>
+            </div>
+          </div>
+        </div>
+
+        <form id="chat-form" class="chat-form">
+          <label class="sr-only" for="chat-input">Your question</label>
+          <input id="chat-input" maxlength="4000" placeholder="Ask about past entries, moods, or reflections…" required>
+          <button class="button button-primary" type="submit">Ask RAG Bot</button>
+        </form>
+      </div>
+    </section>
+
+    <footer class="site-footer">
+      <span>pepal — 100% Local &amp; Private by Design</span>
+      <span>PostgreSQL (pgvector) + Ollama</span>
+    </footer>
+  </main>
+
+  <!-- Save Chat to Journal Modal Dialog -->
+  <dialog id="save-chat-modal" class="chat-modal" aria-labelledby="save-chat-modal-title">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div>
+          <p class="eyebrow">RECORD CONVERSATION</p>
+          <h2 id="save-chat-modal-title" class="modal-title">Save Chat as Journal Entry</h2>
+        </div>
+        <button id="save-chat-modal-close" class="modal-close" type="button" aria-label="Close dialog">&times;</button>
+      </div>
+      <p class="modal-intro">Review or edit the reflection below before saving it into your private journal archive.</p>
+
+      <div class="modal-meta-grid">
+        <div class="meta-field">
+          <label class="eyebrow" for="modal-entry-date">ENTRY DATE</label>
+          <input type="date" id="modal-entry-date" required>
+        </div>
+        <div class="meta-field">
+          <label class="eyebrow">ENERGY</label>
+          <div class="toggle-group" id="modal-energy-toggle" role="radiogroup">
+            <button type="button" class="pill is-selected" data-value="HIGH">
+              <svg class="ui-icon" viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+              <span>High</span>
+            </button>
+            <button type="button" class="pill" data-value="LOW">
+              <svg class="ui-icon" viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="6" width="18" height="12" rx="2" ry="2"/><line x1="23" y1="13" x2="23" y2="11"/></svg>
+              <span>Low</span>
+            </button>
+          </div>
+        </div>
+        <div class="meta-field">
+          <label class="eyebrow">MOOD</label>
+          <div class="toggle-group" id="modal-mood-toggle" role="radiogroup">
+            <button type="button" class="pill is-selected" data-value="GOOD">
+              <svg class="ui-icon" viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+              <span>Good</span>
+            </button>
+            <button type="button" class="pill" data-value="BAD">
+              <svg class="ui-icon" viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9z"/></svg>
+              <span>Difficult</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-body-field">
+        <label class="eyebrow" for="modal-chat-body">CONVERSATION REFLECTION (EDITABLE)</label>
+        <textarea id="modal-chat-body" class="modal-textarea" rows="12" placeholder="Conversation text…" required></textarea>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" id="modal-cancel-btn" class="button button-ghost">Cancel</button>
+        <button type="button" id="modal-confirm-save-btn" class="button button-primary">Save to Journal Archive</button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- Global Toast Region -->
+  <div id="toast-region" class="toast-region" aria-live="polite" aria-atomic="true"></div>
+</body>
+</html>

@@ -1,0 +1,93 @@
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    container_name: pepal-postgres
+    environment:
+      POSTGRES_DB: pepal
+      POSTGRES_USER: pepal
+      POSTGRES_PASSWORD: localjournal
+    ports:
+      - "5433:5432"
+    volumes:
+      - pepal_data:/var/lib/postgresql/data
+      - ./src/main/resources/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pepal -d pepal"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: pepal-ollama
+    ports:
+      - "${OLLAMA_HOST_PORT:-11434}:11434"
+    volumes:
+      - pepal_ollama:/root/.ollama
+    healthcheck:
+      test: ["CMD-SHELL", "ollama list > /dev/null 2>&1 || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+    restart: unless-stopped
+
+  model-puller:
+    image: ollama/ollama:latest
+    container_name: pepal-model-puller
+    environment:
+      OLLAMA_HOST: http://ollama:11434
+      CHAT_MODEL: ${OLLAMA_CHAT_MODEL:-qwen2.5:3b}
+      EMBEDDING_MODEL: ${OLLAMA_EMBEDDING_MODEL:-nomic-embed-text-v2-moe}
+    entrypoint: ["/bin/sh", "-c"]
+    command: >
+      "echo 'Connecting to Ollama service at $$OLLAMA_HOST...' &&
+       until ollama list > /dev/null 2>&1; do sleep 2; done &&
+       echo 'Pulling chat model: $$CHAT_MODEL...' &&
+       ollama pull $$CHAT_MODEL &&
+       echo 'Pulling embedding model: $$EMBEDDING_MODEL...' &&
+       (ollama pull $$EMBEDDING_MODEL || ollama pull nomic-embed-text) &&
+       echo 'All required models are ready.'"
+    depends_on:
+      ollama:
+        condition: service_healthy
+    restart: "no"
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pepal-app
+    ports:
+      - "8080:8080"
+    environment:
+      SERVER_ADDRESS: "0.0.0.0"
+      SERVER_PORT: "8080"
+      DB_URL: "jdbc:postgresql://db:5432/pepal"
+      DB_USER: "pepal"
+      DB_PASSWORD: "localjournal"
+      OLLAMA_BASE_URL: "http://ollama:11434"
+      OLLAMA_CHAT_MODEL: "${OLLAMA_CHAT_MODEL:-qwen2.5:3b}"
+      OLLAMA_EMBEDDING_MODEL: "${OLLAMA_EMBEDDING_MODEL:-nomic-embed-text-v2-moe}"
+      JAVA_OPTS: "-Xmx512m -XX:+UseG1GC"
+    depends_on:
+      db:
+        condition: service_healthy
+      ollama:
+        condition: service_healthy
+      model-puller:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+
+volumes:
+  pepal_data:
+    name: pepal_data
+  pepal_ollama:
+    name: pepal_ollama
