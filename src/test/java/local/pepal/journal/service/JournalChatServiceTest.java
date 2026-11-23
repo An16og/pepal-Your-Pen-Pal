@@ -52,8 +52,8 @@ class JournalChatServiceTest {
 
     @Test
     void ask_whenNoEntriesFound_returnsFallbackWithoutCallingChatClient() {
-        when(journalRepository.findRecentBefore(any(), eq(5))).thenReturn(List.of());
-        when(journalService.relevantEntries("What did I eat?")).thenReturn(List.of());
+        when(journalRepository.findRecentBefore(any(), eq(3))).thenReturn(List.of());
+        when(journalService.relevantEntries(eq("What did I eat?"), eq(6), eq(0.55))).thenReturn(List.of());
 
         ChatResponse response = chatService.ask("What did I eat?");
 
@@ -68,7 +68,8 @@ class JournalChatServiceTest {
                 new EntryResponse(1L, "DAILY_PROMPT", LocalDate.of(2026, 10, 2), now, now, "HIGH", "GOOD", "Went for an early run in the park.")
         );
         SettingsRecord settings = new SettingsRecord((short) 1, "GENTLE", null, "EN", null, now);
-        when(journalService.relevantEntries("Did I exercise?")).thenReturn(entries);
+        when(journalService.relevantEntries(eq("Did I exercise?"), eq(6), eq(0.55))).thenReturn(entries);
+        when(journalRepository.findRecentBefore(any(), eq(3))).thenReturn(List.of());
         when(settingsService.getSettings()).thenReturn(settings);
         when(promptBuilder.build(eq(settings), eq(TaskType.CHAT))).thenReturn("Custom system prompt with gentle tone");
         when(chatClient.prompt().system(anyString()).user(anyString()).options(any()).call().content())
@@ -86,7 +87,8 @@ class JournalChatServiceTest {
                 new EntryResponse(1L, "FREEFORM", LocalDate.of(2026, 10, 2), now, now, "LOW", "BAD", "Wrote some code today.")
         );
         SettingsRecord settings = new SettingsRecord((short) 1, "COACH", null, "HINGLISH", null, now);
-        when(journalService.relevantEntries("Did I exercise?")).thenReturn(entries);
+        when(journalService.relevantEntries(eq("Did I exercise?"), eq(6), eq(0.55))).thenReturn(entries);
+        when(journalRepository.findRecentBefore(any(), eq(3))).thenReturn(List.of());
         when(settingsService.getSettings()).thenReturn(settings);
         when(promptBuilder.build(eq(settings), eq(TaskType.CHAT))).thenReturn("Coach system prompt");
         when(chatClient.prompt().system(anyString()).user(anyString()).options(any()).call().content())

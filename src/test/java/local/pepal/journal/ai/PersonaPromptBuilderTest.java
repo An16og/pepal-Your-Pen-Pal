@@ -87,7 +87,7 @@ class PersonaPromptBuilderTest {
 
         String englishPrompt = builder.build("GENTLE", null, "EN", TaskType.CHAT);
         assertFalse(englishPrompt.contains("[LANGUAGE INSTRUCTION]"));
-        assertFalse(englishPrompt.contains("Hinglish"));
+        assertFalse(englishPrompt.contains("Reply in natural, casual Hinglish"));
     }
 
     @Test

@@ -16,6 +16,8 @@ RUN sed -i 's/\r$//' mvnw && chmod +x mvnw
 RUN ./mvnw dependency:go-offline -B || true
 
 # Copy source code and build production fat JAR
+# CACHE_BUST invalidates only this layer (and below) when source changed
+ARG CACHE_BUST=1
 COPY src ./src
 RUN ./mvnw clean package -DskipTests -B
 

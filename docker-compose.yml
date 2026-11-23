@@ -38,8 +38,8 @@ services:
     container_name: pepal-model-puller
     environment:
       OLLAMA_HOST: http://ollama:11434
-      CHAT_MODEL: ${OLLAMA_CHAT_MODEL:-gemma3:1b}
-      EMBEDDING_MODEL: ${OLLAMA_EMBEDDING_MODEL:-nomic-embed-text-v2-moe}
+      CHAT_MODEL: ${OLLAMA_CHAT_MODEL:-llama3.2:3b}
+      EMBEDDING_MODEL: ${OLLAMA_EMBEDDING_MODEL:-nomic-embed-text}
     entrypoint: ["/bin/sh", "-c"]
     command: >
       "echo 'Connecting to Ollama service at $$OLLAMA_HOST...' &&
@@ -68,8 +68,8 @@ services:
       DB_USER: "pepal"
       DB_PASSWORD: "localjournal"
       OLLAMA_BASE_URL: "http://ollama:11434"
-      OLLAMA_CHAT_MODEL: "${OLLAMA_CHAT_MODEL:-gemma3:1b}"
-      OLLAMA_EMBEDDING_MODEL: "${OLLAMA_EMBEDDING_MODEL:-nomic-embed-text-v2-moe}"
+      OLLAMA_CHAT_MODEL: "${OLLAMA_CHAT_MODEL:-llama3.2:3b}"
+      OLLAMA_EMBEDDING_MODEL: "${OLLAMA_EMBEDDING_MODEL:-nomic-embed-text}"
       JAVA_OPTS: "-Xmx512m -XX:+UseG1GC"
     depends_on:
       db:

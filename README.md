@@ -13,12 +13,12 @@ A 100% local, offline, physical-style AI journal web app. Built with Spring Boot
 - **Manual Date Picker & Live Clocks**: Keep a live second-by-second clock on your page, or manually change the date to backfill missed days.
 - **Mood & Energy Tracking**: Select Energy (`High` / `Low`) and Mood (`Good` / `Bad`) with every entry. Badges appear in history and are embedded for semantic RAG queries.
 - **Side Drawer & Tabs**: Browse past entries and query the grounded RAG bot in dedicated tabs or via a quick-access side drawer.
-- **Local RAG Bot**: Queries local Ollama (`llama3.2`) using pgvector cosine similarity search (`<=>`) grounded strictly in your personal entries and states.
+- **Local RAG Bot**: Queries local Ollama (`llama3.2:3b`) using pgvector cosine similarity search (`<=>`) with a distance threshold, grounded strictly in your personal entries and states.
 
 ## Tech Stack
 
 - **Backend**: Spring Boot 3.4.4, Java 17, Spring JDBC (`JdbcTemplate`), Flyway Migrations
-- **AI Integration**: Spring AI (Ollama `gemma3:1b` chat model and `nomic-embed-text` 768-dim embeddings)
+- **AI Integration**: Spring AI (Ollama `llama3.2:3b` chat model and `nomic-embed-text` 768-dim embeddings)
 - **Database**: PostgreSQL 16 with `pgvector` extension and HNSW cosine index
 - **Frontend**: Single Page Application with Vanilla HTML5, CSS3, and JavaScript Fetch API
 

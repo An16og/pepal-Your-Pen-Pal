@@ -186,6 +186,18 @@ public class JournalService {
     }
 
     public List<EntryResponse> relevantEntries(String question) {
-        return repository.findSimilar(embeddingModel.embed(question), 5);
+        return relevantEntries(question, 6, 0.55);
+    }
+
+    /**
+     * Semantic retrieval with a cosine-distance cutoff so weakly related entries
+     * are dropped instead of drowning the chat context.
+     */
+    public List<EntryResponse> relevantEntries(String question, int limit, double maxDistance) {
+        float[] embedding = embeddingModel.embed(question);
+        return repository.findSimilarScored(embedding, limit).stream()
+                .filter(scored -> scored.distance() <= maxDistance)
+                .map(JournalRepository.ScoredEntry::entry)
+                .toList();
     }
 }
