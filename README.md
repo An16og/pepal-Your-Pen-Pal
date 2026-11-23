@@ -12,20 +12,21 @@ A 100% local, offline, physical-style AI journal web app. Built with Spring Boot
 - **Freeform Journaling**: Add unlimited spontaneous entries without prompts whenever you like.
 - **Manual Date Picker & Live Clocks**: Keep a live second-by-second clock on your page, or manually change the date to backfill missed days.
 - **Mood & Energy Tracking**: Select Energy (`High` / `Low`) and Mood (`Good` / `Bad`) with every entry. Badges appear in history and are embedded for semantic RAG queries.
+- **Periodic Summaries**: Generate weekly / monthly / yearly reflective digests grounded in your entries.
 - **Side Drawer & Tabs**: Browse past entries and query the grounded RAG bot in dedicated tabs or via a quick-access side drawer.
-- **Local RAG Bot**: Queries local Ollama (`llama3.2:3b`) using pgvector cosine similarity search (`<=>`) with a distance threshold, grounded strictly in your personal entries and states.
+- **Local RAG Bot**: Queries local Ollama (`llama3.2:3b`) using pgvector cosine similarity (`<=>`) with a distance cutoff, date-aware lookup, and drain/recharge heuristics. Answers are prompted to cite concrete dates and details from your notes.
 
 ## Tech Stack
 
 - **Backend**: Spring Boot 3.4.4, Java 17, Spring JDBC (`JdbcTemplate`), Flyway Migrations
-- **AI Integration**: Spring AI (Ollama `llama3.2:3b` chat model and `nomic-embed-text` 768-dim embeddings)
-- **Database**: PostgreSQL 16 with `pgvector` extension and HNSW cosine index
+- **AI Integration**: Spring AI (Ollama chat model `llama3.2:3b`, embedding model `nomic-embed-text` at 768 dims)
+- **Database**: PostgreSQL 16 with `pgvector` extension and HNSW cosine index (host port `5433` by default)
 - **Frontend**: Single Page Application with Vanilla HTML5, CSS3, and JavaScript Fetch API
 
 ## Prerequisites
 
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/) installed and running.
-- *(Optional for bare-metal dev)*: Java 17+, Maven, and local Ollama.
+- *(Optional for bare-metal dev)*: Java 17+, Maven, and local Ollama with `llama3.2:3b` + `nomic-embed-text`.
 
 ## Quickstart (1-Click Containerized Stack)
 
@@ -50,7 +51,34 @@ To stop the services:
 docker compose up -d --build
 ```
 
-Once started, the application automatically launches and is accessible at [http://localhost:8080](http://localhost:8080). All entries, embeddings, and downloaded AI models persist across restarts in Docker named volumes (`pepal_data`, `pepal_ollama`).
+Once started, the application launches at [http://localhost:8080](http://localhost:8080). Entries, embeddings, and downloaded AI models persist across restarts in Docker named volumes (`pepal_data`, `pepal_ollama`).
+
+First chat-model pull (`llama3.2:3b`, ~2 GB) can take several minutes depending on network speed. The app container waits until the model-puller finishes.
+
+### Optional model overrides
+```bash
+# PowerShell example
+$env:OLLAMA_CHAT_MODEL="qwen2.5:3b"
+$env:OLLAMA_EMBEDDING_MODEL="nomic-embed-text"
+docker compose up -d --build
+```
+
+## Helper Scripts
+
+From the repo root, with the app already running on port 8080:
+
+```powershell
+# Seed ~1 month of realistic sample journal entries
+.\scripts\seed-data.ps1
+
+# API smoke coverage (entries, trash, prompts, settings)
+.\scripts\smoke-test.ps1
+
+# Manual RAG quality checklist (prints Q/A for review)
+.\scripts\rag-eval.ps1
+```
+
+On macOS / Linux, use `./scripts/smoke-test.sh http://localhost:8080`.
 
 ## REST API
 
@@ -71,13 +99,26 @@ Once started, the application automatically launches and is accessible at [http:
 
 ### Settings & Persona
 - `GET /api/settings` — Get current settings and list of presets.
-- `PUT /api/settings` — Update persona preset, custom text, and language.
+- `PUT /api/settings` — Update persona preset, custom text, language, and optional user name.
 - `GET /api/settings/preview?preset=...&language=...` — Preview composed system prompt.
+
+### Summaries
+- `GET /api/summaries?type=WEEK|MONTH|YEAR` — List generated summaries (`limit`, `offset` optional).
+- `GET /api/summaries/{id}` — Get one summary.
+- `GET /api/summaries/{id}/entries` — Entries included in that summary.
+- `POST /api/summaries/generate?type=WEEK|MONTH|YEAR&date=YYYY-MM-DD&force=false` — Generate a summary for a period.
 
 ### AI RAG Chat
 - `POST /api/chat` — Ask the RAG companion grounded questions about your journal.
+  - Body: `{ "message": "...", "history": [{ "role": "user"|"assistant", "content": "..." }] }`
+  - Retrieval mixes semantic neighbors (cosine distance ≤ ~0.55), optional date matches, and mood/energy heuristics. Recent entries are only a backfill when retrieval is thin.
 
 ## Changelog & Migration Notes
+
+### RAG quality defaults (2026-11)
+- Default chat model moved from `gemma3:1b` to **`llama3.2:3b`** for stronger grounded answers on modest hardware.
+- Default embedding model is **`nomic-embed-text`** (768-dim).
+- Chat retrieval now applies a cosine-distance cutoff and richer note context; prompts require concrete dates/details instead of generic advice.
 
 ### Project Rename (USHER to pepal)
 - The project has been renamed from USHER to **pepal**.
