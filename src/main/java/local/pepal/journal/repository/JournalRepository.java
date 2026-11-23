@@ -207,7 +207,7 @@ public class JournalRepository {
         return jdbc.query("""
                 SELECT id, entry_type, entry_date, created_at, updated_at, energy, mood, body
                 FROM journal_entry
-                WHERE deleted_at IS NULL AND (mood = 'BAD' OR (energy = 'LOW' AND (body ILIKE '%drain%' OR body ILIKE '%exhaust%' OR body ILIKE '%fatigue%' OR body ILIKE '%slump%' OR body ILIKE '%insomnia%' OR body ILIKE '%struggl%')))
+                WHERE deleted_at IS NULL AND (mood = 'BAD' OR energy = 'LOW')
                 ORDER BY entry_date DESC, created_at DESC, id DESC
                 LIMIT ?
                 """, (rs, row) -> mapActive(rs), limit);
@@ -217,11 +217,31 @@ public class JournalRepository {
         return jdbc.query("""
                 SELECT id, entry_type, entry_date, created_at, updated_at, energy, mood, body
                 FROM journal_entry
-                WHERE deleted_at IS NULL AND (body ILIKE '%walk%' OR body ILIKE '%chai%' OR body ILIKE '%tea%' OR body ILIKE '%cycle%' OR body ILIKE '%cycling%' OR body ILIKE '%rohan%' OR body ILIKE '%lake%')
+                WHERE deleted_at IS NULL AND mood = 'GOOD' AND energy = 'HIGH'
                 ORDER BY entry_date DESC, created_at DESC, id DESC
                 LIMIT ?
                 """, (rs, row) -> mapActive(rs), limit);
     }
+
+    /**
+     * Semantic neighbors with cosine distance. Distance 0 = identical; ~1 = orthogonal.
+     * Callers should filter with a max-distance threshold (e.g. 0.55) so weak matches
+     * do not pollute the chat context.
+     */
+    public List<ScoredEntry> findSimilarScored(float[] embedding, int limit) {
+        return jdbc.query("""
+                SELECT e.id, e.entry_type, e.entry_date, e.created_at, e.updated_at, e.energy, e.mood, e.body,
+                       (emb.embedding <=> CAST(? AS vector)) AS distance
+                FROM entry_embedding emb
+                JOIN journal_entry e ON emb.entry_id = e.id
+                WHERE e.deleted_at IS NULL
+                ORDER BY distance
+                LIMIT ?
+                """, (rs, row) -> new ScoredEntry(mapActive(rs), rs.getDouble("distance")),
+                toVectorLiteral(embedding), limit);
+    }
+
+    public record ScoredEntry(EntryResponse entry, double distance) {}
 
     public List<EntryResponse> findInDateRange(LocalDate fromInclusive, LocalDate toExclusive) {
         return jdbc.query("""

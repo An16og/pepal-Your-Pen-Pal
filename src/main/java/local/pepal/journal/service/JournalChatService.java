@@ -32,6 +32,12 @@ public class JournalChatService {
     private static final Pattern DATE_PATTERN_ISO = Pattern.compile(
             "\\b(\\d{4})-(\\d{1,2})-(\\d{1,2})\\b");
 
+    /** Cosine distance cutoff for semantic neighbors (0 identical, ~1 orthogonal). */
+    private static final double SEMANTIC_MAX_DISTANCE = 0.55;
+    private static final int SEMANTIC_LIMIT = 6;
+    private static final int NOTE_BODY_CHARS = 480;
+    private static final int MAX_NOTES = 8;
+
     public JournalChatService(
             ChatClient chatClient,
             JournalService journalService,
@@ -55,9 +61,7 @@ public class JournalChatService {
             return new ChatResponse("How can I reflect with you today?");
         }
 
-        // 1. Extract any mentioned date
         Optional<LocalDate> targetDateOpt = extractDateFromQuestion(question);
-        List<String> dateNotes = new ArrayList<>();
         List<EntryResponse> dateSpecificEntries = new ArrayList<>();
 
         if (targetDateOpt.isPresent()) {
@@ -66,15 +70,10 @@ public class JournalChatService {
             if (entriesOnDate.isEmpty()) {
                 java.time.format.DateTimeFormatter fmt = java.time.format.DateTimeFormatter.ofPattern("d MMMM yyyy");
                 return new ChatResponse("You didn't write any journal entry on " + targetDate.format(fmt) + ".");
-            } else {
-                dateSpecificEntries.addAll(entriesOnDate);
             }
+            dateSpecificEntries.addAll(entriesOnDate);
         }
 
-        // 2. Fetch recent entries (last 5) so the model always has the latest life context
-        List<EntryResponse> recentEntries = journalRepository.findRecentBefore(LocalDate.now().plusDays(1), 5);
-
-        // 3. Fetch semantic matches if query is meaningful (> 4 chars and not conversational glue)
         List<EntryResponse> semanticMatches = new ArrayList<>();
         String trimmed = question.strip().toLowerCase();
         boolean isShortGlue = trimmed.length() <= 10 && (
@@ -83,117 +82,102 @@ public class JournalChatService {
                 trimmed.equals("hlo") || trimmed.equals("hi") || trimmed.equals("hello") ||
                 trimmed.equals("tell me more") || trimmed.equals("kya") || trimmed.equals("aur batao"));
 
-        if (!isShortGlue) {
+        if (!isShortGlue && dateSpecificEntries.isEmpty()) {
             try {
-                semanticMatches = journalService.relevantEntries(question);
+                semanticMatches = journalService.relevantEntries(question, SEMANTIC_LIMIT, SEMANTIC_MAX_DISTANCE);
             } catch (Exception ignored) {
-                // If semantic retrieval fails, fall back gracefully to recent entries
+                // Fall back to recency / emotional heuristics below
             }
         }
 
-        // 3b. Fetch low mood and recharge entries if emotional query
         List<EntryResponse> emotionalMatches = new ArrayList<>();
-        if (isEmotionalQuery(question)) {
+        EmotionalFocus emotionalFocus = classifyEmotionalFocus(question);
+        if (emotionalFocus != EmotionalFocus.NONE) {
             try {
-                emotionalMatches.addAll(journalRepository.findRecentLowMoodOrEnergy(3));
-                emotionalMatches.addAll(journalRepository.findRecentRechargeMoments(3));
+                if (emotionalFocus == EmotionalFocus.DRAIN || emotionalFocus == EmotionalFocus.BOTH) {
+                    emotionalMatches.addAll(journalRepository.findRecentLowMoodOrEnergy(4));
+                }
+                if (emotionalFocus == EmotionalFocus.RECHARGE || emotionalFocus == EmotionalFocus.BOTH) {
+                    emotionalMatches.addAll(journalRepository.findRecentRechargeMoments(4));
+                }
             } catch (Exception ignored) {}
         }
 
-        // 4. Combine entries with priority to semantic and date matches
+        // Recency is a backfill only — prefer semantic / date / emotional hits so
+        // the model is not drowned in unrelated recent notes.
+        List<EntryResponse> recentEntries = journalRepository.findRecentBefore(LocalDate.now().plusDays(1), 3);
+
         Map<Long, EntryResponse> combinedMap = new LinkedHashMap<>();
         for (EntryResponse e : dateSpecificEntries) combinedMap.put(e.id(), e);
         for (EntryResponse e : semanticMatches) combinedMap.put(e.id(), e);
         for (EntryResponse e : emotionalMatches) combinedMap.put(e.id(), e);
-        for (EntryResponse e : recentEntries) combinedMap.put(e.id(), e);
+
+        boolean weakRetrieval = dateSpecificEntries.isEmpty()
+                && semanticMatches.isEmpty()
+                && emotionalMatches.size() < 2;
+        if (weakRetrieval || isShortGlue) {
+            for (EntryResponse e : recentEntries) combinedMap.put(e.id(), e);
+        } else if (combinedMap.size() < 3) {
+            for (EntryResponse e : recentEntries) {
+                combinedMap.putIfAbsent(e.id(), e);
+                if (combinedMap.size() >= 4) break;
+            }
+        }
 
         List<EntryResponse> allEntries = new ArrayList<>(combinedMap.values());
 
-        if (allEntries.isEmpty() && dateNotes.isEmpty()) {
+        if (allEntries.isEmpty()) {
             return new ChatResponse("You haven't written any journal entries yet. Once you write your first reflection, I can help you spot patterns and reflect on your days.");
         }
 
-        // 5. Construct compact, focused notes for qwen:4b (prevents context drowning)
-        StringBuilder notesBuilder = new StringBuilder();
-        if (!dateSpecificEntries.isEmpty()) {
-            for (EntryResponse e : dateSpecificEntries) {
-                notesBuilder.append(String.format("- %s (mood: %s, energy: %s): %s\n",
-                        e.entryDate(), e.mood(), e.energy(), e.body().strip()));
-            }
-        } else if (isEmotionalQuery(question)) {
-            // Include low energy / stress moments
-            for (EntryResponse e : emotionalMatches) {
-                if ("BAD".equalsIgnoreCase(e.mood()) || "LOW".equalsIgnoreCase(e.energy())) {
-                    notesBuilder.append(String.format("- %s (drained/stress): %s\n",
-                            e.entryDate(), summarizeShort(e.body(), 110)));
-                } else {
-                    notesBuilder.append(String.format("- %s (recharge/comfort): %s\n",
-                            e.entryDate(), summarizeShort(e.body(), 110)));
-                }
-            }
-            for (EntryResponse e : recentEntries.stream().limit(2).toList()) {
-                notesBuilder.append(String.format("- %s: %s\n",
-                        e.entryDate(), summarizeShort(e.body(), 110)));
-            }
-        } else {
-            for (EntryResponse e : allEntries.stream().limit(6).toList()) {
-                notesBuilder.append(String.format("- %s (%s, %s): %s\n",
-                        e.entryDate(), e.mood(), e.energy(), summarizeShort(e.body(), 140)));
-            }
-        }
+        String notes = buildNotesBlock(dateSpecificEntries, emotionalMatches, allEntries, question);
+        String historyBlock = formatHistory(history);
 
-        // 6. Format recent conversation history if provided
-        StringBuilder historyBuilder = new StringBuilder();
-        if (history != null && !history.isEmpty()) {
-            historyBuilder.append("Recent Conversation Context:\n");
-            for (ChatMessageDto msg : history) {
-                if (msg.content() != null && !msg.content().isBlank()) {
-                    String speaker = "user".equalsIgnoreCase(msg.role()) ? "User" : "pepal";
-                    historyBuilder.append(speaker).append(": ").append(msg.content().strip()).append("\n");
-                }
-            }
-            historyBuilder.append("\n");
-        }
-
-        // 7. Compose system and user prompt
         SettingsRecord settings = settingsService.getSettings();
         String baseSystemPrompt = promptBuilder.build(settings, TaskType.CHAT);
         String systemPrompt = (baseSystemPrompt == null || baseSystemPrompt.isBlank() ? "" : baseSystemPrompt + "\n\n") + """
-                You are pepal, a personal journal companion.
-                Always reply directly to the user as "you".
-                Keep your reply warm, grounded in their notes, and concise (2-3 sentences max).
-                Never preach, never list generic medical or legal causes, and avoid generic coping advice.
-                Ground your reply strictly in the user's journal notes provided.
-                If something is not in their journal notes, state clearly that you couldn't find any mention of it in their journal.
+                You are pepal, a personal journal companion answering from Journal Notes below.
+                Rules:
+                - Speak to the user as "you".
+                - Every claim must be grounded in a dated note. Cite the date when you mention a fact.
+                - Use concrete nouns from the notes (people, places, food, activities, sleep, work).
+                - Prefer 3-6 short sentences. Longer is fine only when the notes support it.
+                - If the notes do not contain the answer, say you could not find it in their journal.
+                - Never invent causes, advice, medical explanations, or coping tips that are not in the notes.
                 """;
 
         String annotatedQuestion = annotateQuestionIntent(question.strip());
-
         StringBuilder userPromptBuilder = new StringBuilder();
-        userPromptBuilder.append("Journal Notes:\n");
-        userPromptBuilder.append(notesBuilder.toString().strip()).append("\n\n");
-
-        if (historyBuilder.length() > 0) {
-            userPromptBuilder.append(historyBuilder.toString().strip()).append("\n\n");
+        userPromptBuilder.append("Journal Notes:\n").append(notes.strip()).append("\n\n");
+        if (!historyBlock.isBlank()) {
+            userPromptBuilder.append(historyBlock.strip()).append("\n\n");
         }
 
         if (!dateSpecificEntries.isEmpty()) {
-            userPromptBuilder.append("Instruction: Reply directly to the user addressing them as 'you' (e.g. 'On that date, you noted...'). Summarize their reflection on that date.");
-        } else if (isEmotionalQuery(question)) {
             userPromptBuilder.append("Question: ").append(annotatedQuestion)
-                    .append(". Looking at my journal notes above, what has been draining my energy recently, and what helped me recharge before?");
+                    .append("\nInstruction: Summarize what they wrote on that date using their own details. Address them as 'you'.");
+        } else if (emotionalFocus == EmotionalFocus.DRAIN) {
+            userPromptBuilder.append("Question: ").append(annotatedQuestion)
+                    .append("\nInstruction: From the notes, name what drained their energy. Cite dates and concrete causes. No generic advice.");
+        } else if (emotionalFocus == EmotionalFocus.RECHARGE) {
+            userPromptBuilder.append("Question: ").append(annotatedQuestion)
+                    .append("\nInstruction: From the notes, name what helped them recharge or feel better. Cite dates and concrete activities. No generic advice.");
+        } else if (emotionalFocus == EmotionalFocus.BOTH) {
+            userPromptBuilder.append("Question: ").append(annotatedQuestion)
+                    .append("\nInstruction: From the notes, name what drained them and what helped them recharge. Cite dates. No generic advice.");
         } else {
             userPromptBuilder.append("Question: ").append(annotatedQuestion)
-                    .append("\nInstruction: Answer directly and concisely based strictly on the journal notes above.");
+                    .append("\nInstruction: Answer directly from the journal notes. Cite dates and specific details. If missing, say so.");
         }
 
         String answer = chatClient.prompt()
                 .system(systemPrompt)
                 .user(userPromptBuilder.toString().strip())
                 .options(org.springframework.ai.ollama.api.OllamaOptions.builder()
-                        .temperature(0.2)
-                        .repeatPenalty(1.2)
-                        .numPredict(180)
+                        .temperature(0.15)
+                        .topP(0.9)
+                        .repeatPenalty(1.15)
+                        .numPredict(360)
                         .build())
                 .call()
                 .content();
@@ -201,6 +185,58 @@ public class JournalChatService {
         String cleaned = cleanResponse(answer);
         return new ChatResponse(cleaned.isBlank()
                 ? "The journal does not contain enough information to answer that." : cleaned);
+    }
+
+    private String buildNotesBlock(
+            List<EntryResponse> dateSpecificEntries,
+            List<EntryResponse> emotionalMatches,
+            List<EntryResponse> allEntries,
+            String question
+    ) {
+        StringBuilder notesBuilder = new StringBuilder();
+        if (!dateSpecificEntries.isEmpty()) {
+            for (EntryResponse e : dateSpecificEntries) {
+                notesBuilder.append(formatNote(e, Integer.MAX_VALUE));
+            }
+            return notesBuilder.toString();
+        }
+
+        Set<Long> written = new LinkedHashSet<>();
+        EmotionalFocus focus = classifyEmotionalFocus(question);
+        if (focus != EmotionalFocus.NONE) {
+            for (EntryResponse e : emotionalMatches) {
+                if (!written.add(e.id())) continue;
+                boolean drained = "BAD".equalsIgnoreCase(e.mood()) || "LOW".equalsIgnoreCase(e.energy());
+                String tag = drained ? "drained/stress" : "recharge/comfort";
+                notesBuilder.append(String.format("- %s [%s] (mood: %s, energy: %s): %s\n",
+                        e.entryDate(), tag, e.mood(), e.energy(), truncateBody(e.body(), NOTE_BODY_CHARS)));
+            }
+        }
+
+        for (EntryResponse e : allEntries) {
+            if (written.size() >= MAX_NOTES) break;
+            if (!written.add(e.id())) continue;
+            notesBuilder.append(formatNote(e, NOTE_BODY_CHARS));
+        }
+        return notesBuilder.toString();
+    }
+
+    private static String formatNote(EntryResponse e, int bodyLimit) {
+        return String.format("- %s (mood: %s, energy: %s): %s\n",
+                e.entryDate(), e.mood(), e.energy(), truncateBody(e.body(), bodyLimit));
+    }
+
+    private static String formatHistory(List<ChatMessageDto> history) {
+        if (history == null || history.isEmpty()) return "";
+        StringBuilder historyBuilder = new StringBuilder("Recent Conversation Context:\n");
+        int start = Math.max(0, history.size() - 6);
+        for (int i = start; i < history.size(); i++) {
+            ChatMessageDto msg = history.get(i);
+            if (msg.content() == null || msg.content().isBlank()) continue;
+            String speaker = "user".equalsIgnoreCase(msg.role()) ? "User" : "pepal";
+            historyBuilder.append(speaker).append(": ").append(msg.content().strip()).append("\n");
+        }
+        return historyBuilder.toString();
     }
 
     private String cleanResponse(String raw) {
@@ -216,11 +252,11 @@ public class JournalChatService {
             }
             if (trimmed.startsWith("Question:") || trimmed.startsWith("User message:") ||
                     trimmed.startsWith("User says:") || trimmed.startsWith("Instructions:") ||
-                    trimmed.startsWith("Instruction:")) {
+                    trimmed.startsWith("Instruction:") || trimmed.startsWith("Journal Notes:")) {
                 continue;
             }
             if (seen.contains(trimmed)) {
-                break; // Stop repetition loop
+                break;
             }
             seen.add(trimmed);
             sb.append(line).append("\n");
@@ -235,16 +271,38 @@ public class JournalChatService {
         return result.strip();
     }
 
-    private boolean isEmotionalQuery(String text) {
-        if (text == null || text.isBlank()) return false;
+    private enum EmotionalFocus { NONE, DRAIN, RECHARGE, BOTH }
+
+    private EmotionalFocus classifyEmotionalFocus(String text) {
+        if (text == null || text.isBlank()) return EmotionalFocus.NONE;
         String lower = text.toLowerCase();
-        return lower.contains("sad") || lower.contains("down") || lower.contains("low") ||
-               lower.contains("tired") || lower.contains("exhaust") || lower.contains("overwhelm") ||
-               lower.contains("theek nahi") || lower.contains("thik nahi") || lower.contains("khush nahi") ||
-               lower.contains("anxious") || lower.contains("anxiety") || lower.contains("burnout") ||
-               lower.contains("heavy") || lower.contains("depress") || lower.contains("slump") ||
-               lower.contains("bura") || lower.contains("udaas") || lower.contains("stress") ||
-               lower.contains("struggl") || lower.contains("cope") || lower.contains("lonely") || lower.contains("alone");
+
+        boolean drain = lower.contains("sad") || lower.contains("down") || lower.contains("tired") ||
+                lower.contains("exhaust") || lower.contains("overwhelm") || lower.contains("theek nahi") ||
+                lower.contains("thik nahi") || lower.contains("khush nahi") || lower.contains("anxious") ||
+                lower.contains("anxiety") || lower.contains("burnout") || lower.contains("heavy") ||
+                lower.contains("depress") || lower.contains("slump") || lower.contains("bura") ||
+                lower.contains("udaas") || lower.contains("stress") || lower.contains("struggl") ||
+                lower.contains("cope") || lower.contains("lonely") || lower.contains("alone") ||
+                lower.contains("drain") || lower.contains("drained");
+
+        boolean recharge = lower.contains("recharge") || lower.contains("helped") ||
+                lower.contains("comfort") || lower.contains("better") || lower.contains("joy") ||
+                lower.contains("grounded") || lower.contains("what helped") || lower.contains("energised") ||
+                lower.contains("energized") || lower.contains("restored");
+
+        boolean energyAsk = lower.contains("energy") || lower.contains("feeling") || lower.contains("feel");
+
+        // "low energy" / "feeling low" are drain-leaning; bare "energy" with recharge words stays recharge
+        if (lower.contains("low energy") || lower.contains("feeling low") || lower.matches(".*\\blow\\b.*")) {
+            drain = true;
+        }
+
+        if (drain && recharge) return EmotionalFocus.BOTH;
+        if (drain) return EmotionalFocus.DRAIN;
+        if (recharge) return EmotionalFocus.RECHARGE;
+        if (energyAsk) return EmotionalFocus.BOTH;
+        return EmotionalFocus.NONE;
     }
 
     private String annotateQuestionIntent(String question) {
@@ -265,7 +323,6 @@ public class JournalChatService {
     private Optional<LocalDate> extractDateFromQuestion(String text) {
         if (text == null) return Optional.empty();
 
-        // 1. ISO format: 2026-09-27
         Matcher isoMatcher = DATE_PATTERN_ISO.matcher(text);
         if (isoMatcher.find()) {
             try {
@@ -276,7 +333,6 @@ public class JournalChatService {
             } catch (Exception ignored) {}
         }
 
-        // 2. Day Month: 27 September, 27th sept 2026
         Matcher dmMatcher = DATE_PATTERN_DAY_MONTH.matcher(text);
         if (dmMatcher.find()) {
             try {
@@ -287,7 +343,6 @@ public class JournalChatService {
             } catch (Exception ignored) {}
         }
 
-        // 3. Month Day: September 27, Sept 27th
         Matcher mdMatcher = DATE_PATTERN_MONTH_DAY.matcher(text);
         if (mdMatcher.find()) {
             try {
@@ -318,10 +373,10 @@ public class JournalChatService {
         return 1;
     }
 
-    private static String summarizeShort(String text, int maxLen) {
+    private static String truncateBody(String text, int maxLen) {
         if (text == null) return "";
         String clean = text.replaceAll("\\s+", " ").strip();
-        if (clean.length() <= maxLen) return clean;
+        if (maxLen == Integer.MAX_VALUE || clean.length() <= maxLen) return clean;
         return clean.substring(0, maxLen).strip() + "...";
     }
 }
