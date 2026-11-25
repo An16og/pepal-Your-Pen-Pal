@@ -244,7 +244,7 @@ class JournalControllerTest {
 
     @Test
     void chat_returnsAnswerSuccessfully() throws Exception {
-        when(chatService.ask("What went well?")).thenReturn(
+        when(chatService.ask(eq("What went well?"), any())).thenReturn(
                 new ChatResponse("You mentioned having a productive morning.")
         );
 

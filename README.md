@@ -13,7 +13,7 @@ A 100% local, offline, physical-style AI journal web app. Built with Spring Boot
 - **Manual Date Picker & Live Clocks**: Keep a live second-by-second clock on your page, or manually change the date to backfill missed days.
 - **Mood & Energy Tracking**: Select Energy (`High` / `Low`) and Mood (`Good` / `Bad`) with every entry. Badges appear in history and are embedded for semantic RAG queries.
 - **Periodic Summaries**: Generate weekly / monthly / yearly reflective digests grounded in your entries.
-- **Side Drawer & Tabs**: Browse past entries and query the grounded RAG bot in dedicated tabs or via a quick-access side drawer.
+- **Tabs & Menu**: Browse past entries and query the grounded RAG bot from dedicated panels in the side menu.
 - **Local RAG Bot**: Queries local Ollama (`llama3.2:3b`) using pgvector cosine similarity (`<=>`) with a distance cutoff, date-aware lookup, and drain/recharge heuristics. Answers are prompted to cite concrete dates and details from your notes.
 
 ## Tech Stack

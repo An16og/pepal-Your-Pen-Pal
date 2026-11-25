@@ -192,12 +192,14 @@ class JournalServiceTest {
         List<EntryResponse> entries = List.of(new EntryResponse(1L, "FREEFORM", LocalDate.now(), OffsetDateTime.now(), OffsetDateTime.now(), "HIGH", "GOOD", "Happy day"));
 
         when(embeddingModel.embed(query)).thenReturn(fakeVector);
-        when(repository.findSimilar(fakeVector, 5)).thenReturn(entries);
+        when(repository.findSimilarScored(fakeVector, 6)).thenReturn(
+                entries.stream().map(e -> new JournalRepository.ScoredEntry(e, 0.2)).toList()
+        );
 
         List<EntryResponse> actual = service.relevantEntries(query);
 
         assertEquals(entries, actual);
         verify(embeddingModel).embed(query);
-        verify(repository).findSimilar(fakeVector, 5);
+        verify(repository).findSimilarScored(fakeVector, 6);
     }
 }

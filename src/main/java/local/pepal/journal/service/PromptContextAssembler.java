@@ -26,27 +26,23 @@ public class PromptContextAssembler {
     private final JournalRepository journalRepository;
     private final DailyPromptRepository dailyPromptRepository;
     private final EmbeddingModel embeddingModel;
-    private final LifeSnapshotProvider lifeSnapshotProvider;
     private final int maxContextChars;
 
     public PromptContextAssembler(
             JournalRepository journalRepository,
             DailyPromptRepository dailyPromptRepository,
             EmbeddingModel embeddingModel,
-            LifeSnapshotProvider lifeSnapshotProvider,
             @Value("${otto.prompts.max-context-chars:${usher.prompts.max-context-chars:6000}}") int maxContextChars
     ) {
         this.journalRepository = journalRepository;
         this.dailyPromptRepository = dailyPromptRepository;
         this.embeddingModel = embeddingModel;
-        this.lifeSnapshotProvider = lifeSnapshotProvider;
         this.maxContextChars = maxContextChars;
     }
 
     public PromptContext assemble(LocalDate date, List<PromptQuestionDto> avoidAdditional) {
         int nonDeletedCount = journalRepository.countNonDeletedBefore(date);
 
-        // 1. Trend facts (last 14 days before D)
         LocalDate fourteenDaysAgo = date.minusDays(14);
         List<EntryResponse> entriesLast14Days = journalRepository.findInDateRange(fourteenDaysAgo, date);
 
@@ -63,30 +59,21 @@ public class PromptContextAssembler {
             else if ("LOW".equalsIgnoreCase(entry.energy())) lowEnergyCount++;
         }
 
-        // Days journaled & low streak
         Map<LocalDate, List<EntryResponse>> byDate = entriesLast14Days.stream()
                 .collect(Collectors.groupingBy(EntryResponse::entryDate));
         int daysJournaled = byDate.size();
-
         int lowStreak = calculateLowStreak(byDate);
 
-        // 2. Calendar facts
         String dayOfWeek = date.getDayOfWeek().name();
         String season = deriveSeason(date);
 
-        // 3. Recently asked questions (last 14 days before D) + optional avoidAdditional
         List<PromptQuestionDto> avoidQuestions = new ArrayList<>(dailyPromptRepository.findRecentQuestions(date, 14));
         if (avoidAdditional != null) {
             avoidQuestions.addAll(avoidAdditional);
         }
 
-        // 4. Life snapshot
-        Optional<String> lifeSnapshot = lifeSnapshotProvider.latestSnapshot(date);
-
-        // 5. Recent entries (up to 5, truncated to ~400 chars)
         List<EntryResponse> recentEntries = journalRepository.findRecentBefore(date, 5);
 
-        // 6. Relevant older entries (up to 3 via pgvector similarity)
         List<EntryResponse> similarEntries = List.of();
         if (!recentEntries.isEmpty()) {
             String combinedRecentText = recentEntries.stream()
@@ -97,14 +84,12 @@ public class PromptContextAssembler {
                 List<Long> recentIds = recentEntries.stream().map(EntryResponse::id).toList();
                 similarEntries = journalRepository.findSimilarBefore(embedding, date, recentIds, 3);
             } catch (Exception e) {
-                // If embedding fails for similarity lookup, gracefully proceed without older similar entries
                 similarEntries = List.of();
             }
         }
 
-        // 7. Render context with budget trimming (< 6000 chars)
         String rendered = renderWithBudget(date, dayOfWeek, season, daysJournaled, goodMoodCount, badMoodCount,
-                highEnergyCount, lowEnergyCount, lowStreak, lifeSnapshot, avoidQuestions,
+                highEnergyCount, lowEnergyCount, lowStreak, avoidQuestions,
                 recentEntries, similarEntries, 400, true);
 
         return new PromptContext(rendered, lowStreak, nonDeletedCount, avoidQuestions);
@@ -152,7 +137,6 @@ public class PromptContextAssembler {
             int highEnergyCount,
             int lowEnergyCount,
             int lowStreak,
-            Optional<String> lifeSnapshot,
             List<PromptQuestionDto> avoidQuestions,
             List<EntryResponse> recentEntries,
             List<EntryResponse> similarEntries,
@@ -161,39 +145,36 @@ public class PromptContextAssembler {
     ) {
         String rendered = buildContextString(date, dayOfWeek, season, daysJournaled,
                 goodMoodCount, badMoodCount, highEnergyCount, lowEnergyCount, lowStreak,
-                lifeSnapshot, avoidQuestions, recentEntries, similarEntries,
+                avoidQuestions, recentEntries, similarEntries,
                 recentEntryCharLimit, includeSimilarEntries);
 
         if (rendered.length() <= maxContextChars) {
             return rendered;
         }
 
-        // Strategy 1: Truncate recent entries further (to 200 chars)
         if (recentEntryCharLimit > 200) {
             rendered = buildContextString(date, dayOfWeek, season, daysJournaled,
                     goodMoodCount, badMoodCount, highEnergyCount, lowEnergyCount, lowStreak,
-                    lifeSnapshot, avoidQuestions, recentEntries, similarEntries,
+                    avoidQuestions, recentEntries, similarEntries,
                     200, includeSimilarEntries);
             if (rendered.length() <= maxContextChars) {
                 return rendered;
             }
         }
 
-        // Strategy 2: Drop similar entries
         if (includeSimilarEntries && !similarEntries.isEmpty()) {
             rendered = buildContextString(date, dayOfWeek, season, daysJournaled,
                     goodMoodCount, badMoodCount, highEnergyCount, lowEnergyCount, lowStreak,
-                    lifeSnapshot, avoidQuestions, recentEntries, similarEntries,
+                    avoidQuestions, recentEntries, similarEntries,
                     200, false);
             if (rendered.length() <= maxContextChars) {
                 return rendered;
             }
         }
 
-        // Strategy 3: Truncate recent entries down to 100 chars
         return buildContextString(date, dayOfWeek, season, daysJournaled,
                 goodMoodCount, badMoodCount, highEnergyCount, lowEnergyCount, lowStreak,
-                lifeSnapshot, avoidQuestions, recentEntries, similarEntries,
+                avoidQuestions, recentEntries, similarEntries,
                 100, false);
     }
 
@@ -207,7 +188,6 @@ public class PromptContextAssembler {
             int highEnergyCount,
             int lowEnergyCount,
             int lowStreak,
-            Optional<String> lifeSnapshot,
             List<PromptQuestionDto> avoidQuestions,
             List<EntryResponse> recentEntries,
             List<EntryResponse> similarEntries,
@@ -231,10 +211,6 @@ public class PromptContextAssembler {
             sb.append("- NOTE: lowStreak is >= 2. Gentle mode is active.\n");
         }
         sb.append("\n");
-
-        lifeSnapshot.ifPresent(snap -> {
-            sb.append("[LIFE SNAPSHOT]\n").append(snap.strip()).append("\n\n");
-        });
 
         if (!avoidQuestions.isEmpty()) {
             sb.append("[AVOID THESE RECENT QUESTIONS]\n");

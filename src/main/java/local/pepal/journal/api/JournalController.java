@@ -76,9 +76,6 @@ public class JournalController {
 
     @PostMapping("/chat")
     public ChatResponse chat(@Valid @RequestBody ChatRequest request) {
-        if (request.history() == null || request.history().isEmpty()) {
-            return chatService.ask(request.message());
-        }
         return chatService.ask(request.message(), request.history());
     }
 }

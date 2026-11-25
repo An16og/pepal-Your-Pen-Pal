@@ -174,7 +174,6 @@ class DailyPromptValidationTest {
                 journalRepository,
                 dailyPromptRepository,
                 embeddingModel,
-                new NoOpLifeSnapshotProvider(),
                 300 // very small budget to force aggressive trimming
         );
 

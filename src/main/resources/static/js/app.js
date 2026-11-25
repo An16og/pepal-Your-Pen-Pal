@@ -1,4 +1,4 @@
-import { initTheme, toggleTheme, getSavedTheme, THEME_PAPER, THEME_NIGHT, THEME_AMOLED } from './theme.js?v=2.4';
+import { initTheme, toggleTheme, THEME_NIGHT, THEME_AMOLED } from './theme.js?v=2.4';
 import { store } from './state.js?v=2.4';
 import { initWriteView, hasUnsavedDraft, updateLandingGreeting } from './views/write.js?v=2.4';
 import { initHistoryView, refreshHistory } from './views/history.js?v=2.4';
@@ -7,9 +7,6 @@ import { initSummariesView, refreshSummaries } from './views/summaries.js?v=2.4'
 import { initChatView } from './views/chat.js?v=2.4';
 import { initSettingsView } from './views/settings.js?v=2.4';
 
-// Single source of truth for App Name and Title
-export const APP_NAME = 'Pepal';
-export const APP_SUBHEADING = 'Your Penpal';
 export const APP_TITLE = 'Pepal — Your Penpal';
 
 document.title = APP_TITLE;
@@ -74,7 +71,7 @@ function initLeftMenu() {
     }
   });
 
-  // Clicking any menu item closes the drawer
+  // Clicking any menu item closes the side menu
   document.querySelectorAll('.left-menu-item').forEach((item) => {
     item.addEventListener('click', () => {
       toggle(false);
@@ -96,8 +93,6 @@ const VALID_ROUTES = ['write', 'history', 'summaries', 'trash', 'settings', 'cha
 
 function switchRoute(routeName) {
   const target = VALID_ROUTES.includes(routeName) ? routeName : 'write';
-  store.set({ activeTab: target });
-
   // Update nav tabs
   document.querySelectorAll('.tab').forEach((tab) => {
     const active = tab.dataset.panel === target;

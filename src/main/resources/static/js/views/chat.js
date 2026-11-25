@@ -5,7 +5,6 @@ let conversationHistory = [];
 
 export function initChatView() {
   bindChatForm('chat-form', 'chat-input', 'chat-messages');
-  bindChatForm('drawer-chat-form', 'drawer-chat-input', 'drawer-chat-messages');
   bindSuggestionChips();
   bindSaveChatModal();
 }

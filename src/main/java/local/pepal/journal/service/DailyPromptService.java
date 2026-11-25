@@ -56,7 +56,7 @@ public class DailyPromptService {
             PersonaPromptBuilder promptBuilder,
             ChatClient chatClient,
             ObjectMapper objectMapper,
-            @Value("${spring.ai.ollama.chat.options.model:qwen:4b}") String chatModelName,
+            @Value("${spring.ai.ollama.chat.options.model:llama3.2:3b}") String chatModelName,
             @Value("${otto.prompts.temperature:${usher.prompts.temperature:0.8}}") double temperature,
             @Value("${otto.prompts.generation-timeout-seconds:${usher.prompts.generation-timeout-seconds:20}}") int timeoutSeconds,
             @Value("${otto.prompts.similarity-threshold:${usher.prompts.similarity-threshold:0.7}}") double similarityThreshold

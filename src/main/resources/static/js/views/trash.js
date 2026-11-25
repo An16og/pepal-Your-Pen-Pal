@@ -1,6 +1,5 @@
 import { request } from '../api.js?v=2.4';
-import { store } from '../state.js?v=2.4';
-import { formatLocalDate, formatSavedTime, showToast, openModal, closeModal, el } from '../ui.js?v=2.4';
+import { formatLocalDate, formatSavedTime, showToast, openModal, el } from '../ui.js?v=2.4';
 
 let trashEntries = [];
 
@@ -32,7 +31,6 @@ async function loadTrash() {
   try {
     const data = await request('/api/trash');
     trashEntries = Array.isArray(data) ? data : [];
-    store.set({ trash: trashEntries });
     renderTrashList();
     if (emptyTrashBtn) {
       emptyTrashBtn.disabled = trashEntries.length === 0;

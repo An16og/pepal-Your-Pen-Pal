@@ -1,5 +1,4 @@
 import { request } from '../api.js?v=2.4';
-import { store } from '../state.js?v=2.4';
 import { formatLocalDate, formatSavedTime, showToast, el } from '../ui.js?v=2.4';
 
 let allEntries = [];
@@ -35,7 +34,6 @@ async function loadEntries() {
   try {
     const data = await request('/api/entries');
     allEntries = Array.isArray(data) ? data : [];
-    store.set({ entries: allEntries });
     applyFilters();
   } catch (err) {
     container.replaceChildren();

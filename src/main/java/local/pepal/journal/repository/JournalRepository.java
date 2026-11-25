@@ -282,17 +282,6 @@ public class JournalRepository {
         }
     }
 
-    public List<EntryResponse> findSimilar(float[] embedding, int limit) {
-        return jdbc.query("""
-                SELECT e.id, e.entry_type, e.entry_date, e.created_at, e.updated_at, e.energy, e.mood, e.body
-                FROM entry_embedding emb
-                JOIN journal_entry e ON emb.entry_id = e.id
-                WHERE e.deleted_at IS NULL
-                ORDER BY emb.embedding <=> CAST(? AS vector)
-                LIMIT ?
-                """, (rs, row) -> mapActive(rs), toVectorLiteral(embedding), limit);
-    }
-
     private static String toVectorLiteral(float[] vector) {
         if (vector == null || vector.length != 768) {
             throw new IllegalArgumentException("Expected a 768-dimensional nomic-embed-text vector");
